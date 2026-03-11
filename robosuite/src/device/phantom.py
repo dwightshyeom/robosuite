@@ -1,10 +1,3 @@
-# ROS & Threading Imports
-# import rclpy
-# from rclpy.node import Node
-# from geometry_msgs.msg import PoseStamped
-
-
-# External Imports
 from pynput.keyboard import Key, Listener
 import numpy as np
 from robosuite.devices import Device
@@ -33,7 +26,7 @@ class PhantomOmni(Device):
         self._grasp = False
         self._reset_state = 0
         self._enabled = False
-        self._clutch_active = False # <--- Tracks if SHIFT is held down
+        self._clutch_active = False # Tracks if SHIFT is held down
 
     def start_control(self):
         self._reset_internal_state()
@@ -71,7 +64,7 @@ class PhantomOmni(Device):
             dpos=dpos * self.pos_sensitivity,
             rotation=np.eye(3),                       
             raw_drotation=np.zeros(3),                
-            grasp=self._grasp,                        # <--- FIXED: Now passes a pure Boolean
+            grasp=self._grasp,                    
             reset=self._reset_state,
             base_mode=0
         )

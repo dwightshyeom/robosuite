@@ -232,45 +232,17 @@ class CubePickAndPlace(ManipulationEnv):
         # --- 1. Position check ---
         box_pos = self.sim.data.body_xpos[self.box_body_id]
         target_pos = self.sim.data.body_xpos[self.cylinder_green_body_id]
-
         xy_dist = np.linalg.norm(box_pos[:2] - target_pos[:2])
-
         table_z = self.arena.table_top_abs[2]
         box_half_height = 0.02
         z_check = abs(box_pos[2] - (table_z + box_half_height)) < 0.02
-
         cylinder_radius = 0.06
         placed_correctly = xy_dist < cylinder_radius and z_check
-
         arm = self.robots[0].arms[0]
-        # arm_gripper = arm.format_action()
-        # print(f"Arm: {arm_gripper}")
         gripper_qpos = np.array(self.sim.data.site_xpos[self.robots[0].eef_site_id[arm]])
-        # print(f"Gripper QPOS: {gripper_qpos}")
-        # current_qpos = self.robots[0].gripper[arm].format_action(gripper_qpos)
-        # print(f"Current Gripper QPOS: {current_qpos}")
-
-
-        # --- 2. Gripper open check ---
-        # 1. Fetch the exact simulator indices for this robot's gripper joints
-        gripper_joint_indices = self.robots[0]._ref_gripper_joint_pos_indexes
-        # print(f"Gripper Joint Indices: {gripper_joint_indices}")
-        
-        # 2. Extract the current joint positions (angles/slider states) for the gripper
-        # gripper_qpos = self.sim.data.qpos[7:9]
         gripper_qpos = self.sim.data.qpos[7]
-        # print(f"Gripper QPOS: {gripper_qpos}")
-        
-        # 3. Get the default fully open joint positions from the gripper model
         open_qpos = self.robots[0].gripper[arm].init_qpos[0]
-        # print(f"Open QPOS: {open_qpos}")
-        # open_qpos = self.robots[0].gripper.init_qpos
-        
-        # 4. Check if current positions are very close to the open positions
-        # A threshold of 0.01 or 0.02 is standard to account for minor physics jitter
         gripper_is_open = np.abs(gripper_qpos) - np.abs(open_qpos) > 0.01
-        # print(f"Gripper is open: {gripper_is_open}")
-
         success = placed_correctly and gripper_is_open
         
         return success

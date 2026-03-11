@@ -16,7 +16,7 @@ from robosuite.controllers.composite.composite_controller import WholeBody
 from robosuite.src.utils.dataset_utils import gather_demonstrations_as_hdf5
 from robosuite.src.utils.teleop_node_utils import TeleopNode
 from robosuite.src.device.phantom import PhantomOmni
-from robosuite.environments.cube_pnp import CubePickAndPlace
+from robosuite.environments.box_push_cfg import BoxPush
 
 # Main Data Collection Pipeline
 if __name__ == "__main__":
@@ -26,16 +26,16 @@ if __name__ == "__main__":
 
     controller_config = load_composite_controller_config(controller="BASIC", robot="Panda")
 
-    # ROBOSUITE CONFIGURATION DICTIONARY
+    # --- CHANGED: Updated metadata for the new task ---
     config = {
-        "env_name": "PickAndPlace",
+        "env_name": "BoxPush",
         "robots": ["Panda"],
         "controller_configs": controller_config,
     }
     env_info_json = json.dumps(config)
 
-    # ENVIRONMENT INITIALIZATION
-    env = CubePickAndPlace(
+    # --- CHANGED: Initialize BoxPush Environment ---
+    env = BoxPush(
         robots="Panda", 
         controller_configs=controller_config,
         has_renderer=True,            
@@ -46,33 +46,54 @@ if __name__ == "__main__":
         ignore_done=True,              
     )
 
-    env = VisualizationWrapper(env) # end-effector markers
+    env = VisualizationWrapper(env)
     tmp_directory = f"/dev/shm/teleop_{str(time.time()).replace('.', '_')}"
     env = DataCollectionWrapper(env, tmp_directory)
 
     device = PhantomOmni(env=env, ros_node=node, pos_sensitivity=1.0, rot_sensitivity=1.0)
-    
+
     print("\n" + "="*50)
-    print("INTERACTIVE DATA COLLECTION PIPELINE")
+    print("BOX PUSH DATA COLLECTION PIPELINE (CFG)")
     print("="*50)
 
     num_successful_demos = 0
 
     try:
-        # OUTER LOOP: Manages Episodes
+        # --- OUTER LOOP: Manages Episodes ---
         while True:
-            user_input = input(f"\n[Dataset: {num_successful_demos} Demos] Press [ENTER] to start recording (or type 'q' to quit): ")
+            print(f"\n[Dataset: {num_successful_demos} Demos]")
+            print("Select target push distance for this demonstration:")
+            print("  [1] 0.1 meters")
+            print("  [2] 0.2 meters")
+            print("  [3] 0.3 meters")
+            
+            # 1. Condition Input
+            user_input = input("Enter choice (1/2/3) or 'q' to quit: ")
+            
             if user_input.lower() == 'q':
                 break
+                
+            if user_input == '1':
+                target_dist = 0.1
+            elif user_input == '2':
+                target_dist = 0.2
+            elif user_input == '3':
+                target_dist = 0.3
+            else:
+                print("[!] Invalid input. Please enter 1, 2, or 3.")
+                continue
             
-            print("Recording started! Move the robot to complete the task.")
+            # 2. Inject Condition
+            env.set_target_distance(target_dist)
+            
+            print(f"\n>>> Recording started! Push the box exactly {target_dist}m. <<<")
             obs = env.reset()
             device.start_control()
             
             success_hold_count = 10 
             all_prev_gripper_actions = [{ f"{arm}_gripper": np.zeros(robot.gripper[arm].dof) for arm in robot.arms if robot.gripper[arm].dof > 0 } for robot in env.robots]
 
-            # INNER LOOP: Teleoperation
+            # --- INNER LOOP: Teleoperation ---
             while True:
                 start_time = time.time()
                 rclpy.spin_once(node, timeout_sec=0.0)
@@ -80,12 +101,21 @@ if __name__ == "__main__":
                 
                 input_ac_dict = device.input2action()
                 
+                # ESC manually aborts the loop
                 if input_ac_dict is None:
                     print("\n[!] ESC pressed. Halting current demonstration.")
                     break 
                     
                 action_dict = deepcopy(input_ac_dict)
                 
+                # =========================================================
+                # CRITICAL ADDITION: Force the gripper to act as a closed fist
+                # 1.0 = Closed | -1.0 = Open
+                # =========================================================
+                for arm in active_robot.arms:
+                    action_dict[f"{arm}_gripper"] = np.ones(active_robot.gripper[arm].dof)
+                
+                # Proceed with standard arm movement parsing
                 for arm in active_robot.arms:
                     if isinstance(active_robot.composite_controller, WholeBody): 
                         controller_input_type = active_robot.composite_controller.joint_action_policy.input_type
@@ -107,32 +137,38 @@ if __name__ == "__main__":
                 obs, reward, done, info = env.step(env_action)
                 env.render()
                 
-                # Success state machine
+                # Success state machine (Automatically uses the target_dist we set!)
                 if env._check_success():
+                    print(f"[✓] Success condition met! Hold for {success_hold_count} more steps...")
                     success_hold_count -= 1
                 else:
-                    success_hold_count = 10 # maintain the requirement for 10 consecutive successful steps to trigger demo completion
+                    success_hold_count = 10 
                     
+                # Auto-break when task is completed
                 if success_hold_count <= 0:
-                    print("\n[✓] Task Objective Reached!")
+                    print(f"\n[✓] Goal Reached! Box successfully pushed {target_dist}m.")
                     break 
                 
+                # Enforce 20Hz control
                 diff = (1 / 20) - (time.time() - start_time)
                 if diff > 0:
                     time.sleep(diff)
 
-            # POST-DEMONSTRATION PROMPT
+            # --- POST-DEMONSTRATION PROMPT ---
             save_input = input("Do you want to SAVE this demonstration? (y/n): ")
             
             if save_input.lower() == 'y':
                 print("[+] Demonstration kept in temporary memory.")
                 num_successful_demos += 1
+                
+                # ========================================================
+                # NEW: Save the specific target distance for this episode!
+                # ========================================================
+                np.save(os.path.join(env.ep_directory, "condition.npy"), np.array([target_dist]))
             else:
                 print("[-] Discarding data...")
-                # Clear internal wrapper buffers
                 env.states = []
                 env.action_infos = []
-                # Wipe from RAM
                 if os.path.exists(env.ep_directory):
                     shutil.rmtree(env.ep_directory)
                     os.makedirs(env.ep_directory, exist_ok=True)
