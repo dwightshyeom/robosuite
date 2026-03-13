@@ -94,4 +94,4 @@ class FruitSwap(ManipulationEnv):
     def _check_success(self):
         # DataCollectionWrapper only saves runs that return True here.
         # Hardcoded to True for data collection testing.
-        return True 
+        return False
