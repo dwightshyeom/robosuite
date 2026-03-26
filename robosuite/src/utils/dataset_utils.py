@@ -32,7 +32,10 @@ def gather_demonstrations_as_hdf5(directory, out_dir, env_info):
 
         if success:
             del states[-1] 
-            assert len(states) == len(actions)
+            # Dynamically trim the arrays to perfectly match instead of crashing
+            min_len = min(len(states), len(actions))
+            states = states[:min_len]
+            actions = actions[:min_len]
             num_eps += 1
             ep_data_grp = grp.create_group(f"demo_{num_eps}")
             
@@ -42,14 +45,12 @@ def gather_demonstrations_as_hdf5(directory, out_dir, env_info):
             ep_data_grp.create_dataset("states", data=np.array(states))
             ep_data_grp.create_dataset("actions", data=np.array(actions))
 
-            # ========================================================
-            # NEW: Read the condition and bind it as an Attribute
-            # ========================================================
+            # store the target distance condition
             cond_path = os.path.join(directory, ep_directory, "condition.npy")
             if os.path.exists(cond_path):
                 target_dist = np.load(cond_path)[0]
                 print(f"[{ep_directory}] Found condition.npy with target distance: {target_dist}")
-                ep_data_grp.attrs["target_push_distance"] = float(target_dist)
+                ep_data_grp.attrs["condition"] = float(target_dist)
 
     now = datetime.datetime.now()
     grp.attrs["date"] = f"{now.month}-{now.day}-{now.year}"

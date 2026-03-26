@@ -4,9 +4,7 @@ from robosuite.devices import Device
 
 class PhantomOmni(Device):
     """
-    A custom device class that reads absolute poses from a ROS 2 node,
-    calculates the delta movements, and packages them for Robosuite.
-    (ORIENTATION CONTROL DISABLED for easier 3-DoF teleoperation)
+    A custom device class for the Phantom Omni.
     """
     def __init__(self, env, ros_node, pos_sensitivity=1.0, rot_sensitivity=1.0):
         super().__init__(env)
@@ -26,7 +24,7 @@ class PhantomOmni(Device):
         self._grasp = False
         self._reset_state = 0
         self._enabled = False
-        self._clutch_active = False # Tracks if SHIFT is held down
+        self._clutch_active = False
 
     def start_control(self):
         self._reset_internal_state()
@@ -50,13 +48,13 @@ class PhantomOmni(Device):
         mujoco_z = 1*current_pos[1]  
         mapped_pos = np.array([mujoco_x, mujoco_y, mujoco_z])
         
-        # Always calculate Delta to invisibly track the stylus
+        # Always calculate Delta
         dpos = mapped_pos - self.last_pos
 
         # Update baseline for the next frame
         self.last_pos = mapped_pos
 
-        # CRITICAL CLUTCH LOGIC: If Shift is NOT held, wipe the movement delta to 0. 
+        # CLUTCH
         if not self._clutch_active:
             dpos = np.zeros(3)
 
@@ -78,7 +76,7 @@ class PhantomOmni(Device):
         # Engage clutch when Shift is pressed down
         if key == Key.shift or key == Key.shift_l or key == Key.shift_r:
             self._clutch_active = True
-            print("\nClutch Engaged: You can now move the stylus without affecting the robot.\n")
+            print("\nClutch Engaged\n")
         elif key == Key.esc:
             self._reset_state = 1
             self._enabled = False
@@ -88,7 +86,7 @@ class PhantomOmni(Device):
         if key == Key.shift or key == Key.shift_l or key == Key.shift_r:
             self._clutch_active = False
             
-        # Toggle gripper on spacebar RELEASE to avoid key-repeat stuttering
+        # Toggle gripper on spacebar RELEASE
         elif key == Key.space:
             self._grasp = not self._grasp
-            print("\nToggling gripper...\n")
+            print("\nToggling gripper\n")

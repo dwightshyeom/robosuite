@@ -1,10 +1,8 @@
 import numpy as np
-import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 import transforms3d as tf3d
 
-# --- 1. ROS 2 Node ---
 class TeleopNode(Node):
     def __init__(self):
         super().__init__("teleop_node")
