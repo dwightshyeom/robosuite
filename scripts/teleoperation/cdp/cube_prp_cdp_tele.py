@@ -18,7 +18,7 @@ from robosuite.src.utils.teleop_node_utils import TeleopNode
 from robosuite.src.device.phantom import PhantomOmni
 
 # Import the new environment!
-from robosuite.environments.cube_pnp_cdp import CubePlaceCDP
+from robosuite.environments.cdp.cube_prp_cdp import CubePickRotatePlaceCDP
 
 # Main Data Collection Pipeline
 if __name__ == "__main__":
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     env_info_json = json.dumps(config)
 
     # Initialize the custom Pick and Place environment
-    env = CubePlaceCDP(
+    env = CubePickRotatePlaceCDP(
         robots="Panda", 
         controller_configs=controller_config,
         has_renderer=True,            
@@ -72,11 +72,11 @@ if __name__ == "__main__":
         # OUTER LOOP: Manages Episodes
         while True:
             print(f"\n[Dataset: {num_successful_demos} Demos Saved]")
-            print("Select target PLACE distance for this demonstration:")
-            print("  [1] 0.1 meters")
-            print("  [2] 0.2 meters")
-            print("  [3] 0.3 meters")
-            
+            print("Select target PLACE rotation for this demonstration:")
+            print("  [1] 60 degrees")
+            print("  [2] 120 degrees")
+            print("  [3] 180 degrees")
+
             # Condition Input
             user_input = input("Enter choice (1/2/3) or 'q' to quit: ")
             
@@ -84,19 +84,19 @@ if __name__ == "__main__":
                 break
                 
             if user_input == '1':
-                target_dist = 0.1
+                target_rotation = 60.0
             elif user_input == '2':
-                target_dist = 0.2
+                target_rotation = 120.0
             elif user_input == '3':
-                target_dist = 0.3
+                target_rotation = 180.0
             else:
                 print("[!] Invalid input. Please enter 1, 2, or 3.")
                 continue
             
             # Inject Condition into the environment before resetting
-            env.set_target_distance(target_dist)
-            
-            print(f"\n>>> Recording started! Pick the cube and place it exactly {target_dist}m away. <<<")
+            env.set_target_angle(target_rotation)
+
+            print(f"\n>>> Recording started! Pick the cube and place it exactly {target_rotation}m away. <<<")
             obs = env.reset()
             device.start_control()
             
@@ -157,7 +157,7 @@ if __name__ == "__main__":
                     
                 # Auto-break when task is completed
                 if success_hold_count <= 0:
-                    print(f"\n[✓] Goal Reached! Cube successfully placed at {target_dist}m.")
+                    print(f"\n[✓] Goal Reached! Cube successfully placed at {target_rotation}°.")
                     break 
                 
                 # Enforce 20Hz control
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                 print("[+] Demonstration kept in temporary memory.")
                 num_successful_demos += 1
                 # Save the custom parameter for later HDF5 injection
-                np.save(os.path.join(data_wrapper.ep_directory, "condition.npy"), np.array([target_dist]))
+                np.save(os.path.join(data_wrapper.ep_directory, "condition.npy"), np.array([target_rotation]))
 
             else:
                 print("[-] Discarding data...")
