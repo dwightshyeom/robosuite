@@ -7,7 +7,7 @@ from robosuite.models.tasks import ManipulationTask
 from robosuite.utils.observables import Observable, sensor
 import robosuite.utils.transform_utils as T
 
-class CubePlaceCDP(ManipulationEnv):
+class CubePlaceCDPVision(ManipulationEnv):
     def __init__(
         self,
         robots,
@@ -33,9 +33,9 @@ class CubePlaceCDP(ManipulationEnv):
         horizon=1000,
         ignore_done=False,
         hard_reset=True,
-        camera_names="agentview",
-        camera_heights=512,
-        camera_widths=512,
+        camera_names=("agentview", "robot0_eye_in_hand"), 
+        camera_heights=84, 
+        camera_widths=84,
         camera_depths=False,
         camera_segmentations=None,
         renderer="mjviewer",

@@ -7,5 +7,6 @@ from .pomdp.button_lightbulb import ButtonLightbulb
 from .pomdp.fruit_swap import FruitSwap
 from .pomdp.fruit_swap_vision import FruitSwapVision
 from .cdp.cube_pnp_cdp import CubePlaceCDP
+from .cdp.cube_pnp_cdp_vision import CubePlaceCDPVision
 from .cdp.cube_prp_cdp import CubePickRotatePlaceCDP
 ALL_ENVIRONMENTS = REGISTERED_ENVS.keys()
