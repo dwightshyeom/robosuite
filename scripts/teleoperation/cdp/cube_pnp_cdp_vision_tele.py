@@ -18,7 +18,7 @@ from robosuite.src.utils.teleop_node_utils import TeleopNode
 from robosuite.src.device.phantom import PhantomOmni
 
 # Import the new environment!
-from robosuite.environments.cdp.cube_pnp_cdp import CubePlaceCDP
+from robosuite.environments.cdp.cube_pnp_cdp_vision import CubePlaceCDPVision
 
 # Main Data Collection Pipeline
 if __name__ == "__main__":
@@ -35,22 +35,22 @@ if __name__ == "__main__":
 
     # Environment Configuration for the HDF5 metadata
     config = {
-        "env_name": "CubePlaceCDP",
+        "env_name": "CubePlaceCDPVision",
         "robots": ["Panda"],
         "controller_configs": controller_config,
     }
     env_info_json = json.dumps(config)
 
     # Initialize the custom Pick and Place environment
-    env = CubePlaceCDP(
+    env = CubePlaceCDPVision(
         robots="Panda", 
         controller_configs=controller_config,
         has_renderer=True,            
         renderer='mjviewer',           
-        has_offscreen_renderer=False,  
+        has_offscreen_renderer=True,  
         use_camera_obs=False,          
         control_freq=20,
-        ignore_done=True,              
+        ignore_done=True,     
     )
 
     # Wrap environment (DataCollection must wrap before Visualization)
