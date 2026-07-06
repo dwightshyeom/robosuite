@@ -18,7 +18,9 @@ def check_hdf5_structure(file_path):
         
         # Print metadata attributes for the current node, if any exist
         for attr_name, attr_value in obj.attrs.items():
-            print(f"{indent}    🏷️ Attr: {attr_name} = {attr_value}")
+            # Skip the model_file attribute to avoid flooding the console
+            if attr_name != 'model_file' and attr_name != 'env_info':
+                print(f"{indent}    🏷️ Attr: {attr_name} = {attr_value}")
 
     try:
         # Open the file in read-only mode ('r')
@@ -27,7 +29,8 @@ def check_hdf5_structure(file_path):
             
             # Print root-level attributes (metadata attached to the file itself)
             for attr_name, attr_value in f.attrs.items():
-                print(f"    🏷️ Root Attr: {attr_name} = {attr_value}")
+                if attr_name != 'model_file' and attr_name != 'env_info':  # Skip printing the model_file attribute if it exists, as it can be very long
+                    print(f"    🏷️ Root Attr: {attr_name} = {attr_value}")
                 
             # visititems recursively calls our function on every item in the file
             f.visititems(print_node_info)
@@ -40,9 +43,12 @@ def check_hdf5_structure(file_path):
 # --- How to use it ---
 # Replace 'your_data.h5' with the actual path to your HDF5 file
 if __name__ == "__main__":
-    # file_to_check = "./custom_dataset/low_dim_boxpush_120.hdf5"
-    file_to_check = "./custom_dataset/low_dim_cubepnp_goal.hdf5"
+    # file_to_check = "./custom_dataset/demo_vision_pnp_cdp.hdf5"
+    file_to_check = "home/arclab/workspace/robosuite_pomdp/custom_dataset/UncoverBlockVision/image_uncover.hdf5"
+    # file_to_check = "./custom_dataset/fruit_swap/demo_fruit_swap_ld_ld_final_data.hdf5"
+    # file_to_check = "./custom_dataset/low_dim_putkblock.hdf5"
     # file_to_check = "./custom_dataset/demo.hdf5"
+    # file_to_check = "./custom_dataset/pomdp/button/demo.hdf5"
     check_hdf5_structure(file_to_check)
 
 # def inspect_dataset(file_path, dataset_path):
@@ -68,7 +74,7 @@ if __name__ == "__main__":
 #             print(f"🗂️ Data Type: {data_array.dtype}\n")
             
 #             # 4. Print a preview (the first 5 rows) so it doesn't flood your console
-#             print("Preview of the first 5 rows:")
+#             print("Preview of the first rows:")
 #             print(data_array[:10])
             
 #     except Exception as e:
@@ -76,12 +82,13 @@ if __name__ == "__main__":
 
 # # --- How to use it ---
 # if __name__ == "__main__":
-#     file_to_check = "./custom_dataset/low_dim_boxpush_goal.hdf5"
+#     # file_to_check = "./custom_dataset/low_dim_boxpush_goal.hdf5"
+#     file_to_check = "./custom_dataset/demo_vision_pnp_cdp.hdf5"
     
 #     # IMPORTANT: Adjust this path based on your exact file structure!
 #     # If the printout you shared was inside a demo group, you need to include it.
 #     # For example, if it's inside 'demo_9', the path is 'demo_9/actions'
 #     # target_data = "demo_9/actions" # demo_goal.hdf5
-#     target_data = "data/demo_2/goal_obs/push_distance"  # <-- Adjust this based on your file's structure
+#     target_data = "data/demo_1/states"  # <-- Adjust this based on your file's structure
 
 #     inspect_dataset(file_to_check, target_data)

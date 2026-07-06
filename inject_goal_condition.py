@@ -2,10 +2,10 @@ import h5py
 import numpy as np
 
 # RAW dataset (Update this to your actual raw cube place dataset!)
-raw_dataset_path = "../robosuite/custom_dataset/demo.hdf5"
+raw_dataset_path = "../robosuite/custom_dataset/cube_pnp_cdp/demo_cubepnp_goal_120.hdf5"
 
 # FINAL dataset (Update this to your dataset that has the observations extracted)
-final_dataset_path = "../robosuite/custom_dataset/low_dim_cubepnp_goal.hdf5"
+final_dataset_path = "../robosuite/custom_dataset/image_pnp_cdp_256.hdf5"
 
 f_raw = h5py.File(raw_dataset_path, "r")
 f_final = h5py.File(final_dataset_path, "a")

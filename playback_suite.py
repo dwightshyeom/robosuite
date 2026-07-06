@@ -2,7 +2,7 @@ import h5py
 import imageio
 import numpy as np
 from robosuite.controllers import load_composite_controller_config
-from scripts.teleoperation.cdp.cube_pnp_cdp_tele import CubePlaceCDP # Make sure to import a custom environment
+from robosuite.environments.pomdp.button_lightbulb import ButtonLightbulb # Make sure to import a custom environment
 
 def render_custom_video(hdf5_path, video_path):
     '''
@@ -17,7 +17,7 @@ def render_custom_video(hdf5_path, video_path):
     
     # 1. Initialize your specific environment WITH the offscreen renderer ON
     controller_config = load_composite_controller_config(controller="BASIC", robot="Panda")
-    env = CubePlaceCDP(
+    env = ButtonLightbulb(
         robots="Panda",
         controller_configs=controller_config,
         has_renderer=False,            # No on-screen window needed
@@ -37,7 +37,7 @@ def render_custom_video(hdf5_path, video_path):
 
     writer = imageio.get_writer(video_path, fps=20)
 
-    for ep in demos:
+    for ep in demos[:2]:
         print(f"Rendering {ep}...")
         
         # 3. Get the starting state and all actions for this demonstration
@@ -61,7 +61,7 @@ def render_custom_video(hdf5_path, video_path):
 
 if __name__ == "__main__":
     # Point this to your generated dataset!
-    dataset_file = "/home/arclab/workspace/robosuite/custom_dataset/cube_pnp_cdp/demo_cubepnp_goal_120.hdf5"
-    output_video = "./my_teleop_video.mp4"
+    dataset_file = "/home/arclab/workspace/robosuite/custom_dataset/fruit_swap/demo_fruit_swap.hdf5"
+    output_video = "./my_teleop_video_fruit_swap.mp4"
     
     render_custom_video(dataset_file, output_video)
